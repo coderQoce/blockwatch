@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -8,11 +8,73 @@ import {
   ScrollView,
   Image,
 } from 'react-native';
-import { Ionicons, Feather, MaterialIcons, FontAwesome } from '@expo/vector-icons';
+import {
+  Ionicons,
+  Feather,
+  MaterialIcons,
+  FontAwesome,
+} from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function FeedScreen() {
+  const [selectedTab, setSelectedTab] = useState('All');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const cardData = [
+    {
+      image: require('../assets/news.png'),
+      title: 'Traffic accident on main street – Emergency vehicles responding',
+      user: 'WitnessUser',
+      credibility: 94,
+      location: 'Downtown, NYC',
+      time: '2 min ago',
+      likes: 89,
+      views: '1,234',
+      isLive: true,
+      threatLevel: 'high',
+    },
+    {
+      image: require('../assets/onboarding-image.jpg'),
+      title: 'Suspicious activity near mall entrance',
+      user: 'SecurityBot_12',
+      credibility: 88,
+      location: 'Midtown, NYC',
+      time: '5 min ago',
+      likes: 67,
+      views: '850',
+      isLive: true,
+      threatLevel: 'high',
+    },
+    {
+      image: require('../assets/news.png'),
+      title: 'Crowd forming at park — monitoring situation',
+      user: 'PatrolCam',
+      credibility: 76,
+      location: 'Central Park, NYC',
+      time: '10 min ago',
+      likes: 32,
+      views: '580',
+      isLive: false,
+      threatLevel: 'low',
+    },
+  ];
+
+  const filteredCards = cardData.filter((card) => {
+    if (selectedTab === 'Live Now' && !card.isLive) return false;
+
+    if (searchQuery.trim() !== '') {
+      const q = searchQuery.toLowerCase();
+      return (
+        card.title.toLowerCase().includes(q) ||
+        card.location.toLowerCase().includes(q) ||
+        card.user.toLowerCase().includes(q)
+      );
+    }
+
+    return true;
+  });
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#121F1C' }}>
       <ScrollView
@@ -23,6 +85,7 @@ export default function FeedScreen() {
           colors={['#011a11', '#121F1C']}
           style={styles.gradientSection}
         >
+          {/* Header */}
           <View style={styles.headerContainer}>
             <View>
               <Text style={styles.title}>BlockWatch</Text>
@@ -41,6 +104,7 @@ export default function FeedScreen() {
             </View>
           </View>
 
+          {/* Search */}
           <View style={styles.searchBar}>
             <Ionicons
               name="search"
@@ -52,6 +116,8 @@ export default function FeedScreen() {
               placeholder="Search videos, location, users"
               placeholderTextColor="#888"
               style={styles.searchInput}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
             />
             <Feather
               name="filter"
@@ -60,71 +126,76 @@ export default function FeedScreen() {
               style={styles.filterIcon}
             />
           </View>
+
+          {/* Tabs */}
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
             style={styles.tabsRow}
           >
-            {['All', 'Live Now', 'Nearby', 'Top Rated', 'Urgent'].map(
-              (tab, index) => (
-                <TouchableOpacity
-                  key={tab}
+            {['All', 'Live Now', 'Nearby', 'Top Rated', 'Urgent'].map((tab) => (
+              <TouchableOpacity
+                key={tab}
+                style={[
+                  styles.tabButton,
+                  selectedTab === tab && styles.tabButtonActive,
+                ]}
+                onPress={() => setSelectedTab(tab)}
+              >
+                <Text
                   style={[
-                    styles.tabButton,
-                    index === 0 && styles.tabButtonActive,
+                    styles.tabText,
+                    selectedTab === tab && styles.tabTextActive,
                   ]}
                 >
-                  <Text
-                    style={[
-                      styles.tabText,
-                      index === 0 && styles.tabTextActive,
-                    ]}
-                  >
-                    {tab}
-                  </Text>
-                </TouchableOpacity>
-              )
-            )}
+                  {tab}
+                </Text>
+              </TouchableOpacity>
+            ))}
           </ScrollView>
         </LinearGradient>
-        {[...Array(7)].map((_, index) => (
+
+        {/* Cards */}
+        {filteredCards.map((card, index) => (
           <View key={index} style={styles.card}>
             <View style={styles.cardImageWrapper}>
               <Image
-                source={require('../assets/news.png')}
+                source={card.image}
                 style={styles.cardImage}
                 resizeMode="cover"
               />
-              <Text style={styles.liveTag}>LIVE</Text>
-              <Text style={styles.highTag}>HIGH</Text>
+              {card.isLive && <Text style={styles.liveTag}>LIVE</Text>}
+              {card.threatLevel === 'high' && (
+                <Text style={styles.highTag}>HIGH</Text>
+              )}
             </View>
             <View style={styles.cardContent}>
-              <Text style={styles.cardTitle}>
-                Traffic accident on main street – Emergency vehicles responding
-              </Text>
+              <Text style={styles.cardTitle}>{card.title}</Text>
 
               <View style={styles.cardMetaRow}>
-                <Text style={styles.metaText}>WitnessUser</Text>
+                <Text style={styles.metaText}>{card.user}</Text>
                 <View style={styles.credibilityDot} />
-                <Text style={styles.metaText}>94% credible</Text>
+                <Text style={styles.metaText}>
+                  {card.credibility}% credible
+                </Text>
               </View>
 
               <View style={styles.cardMetaRow}>
                 <Ionicons name="location-outline" size={14} color="#aaa" />
-                <Text style={styles.metaText}>Downtown, NYC</Text>
+                <Text style={styles.metaText}>{card.location}</Text>
                 <MaterialIcons
                   name="access-time"
                   size={14}
                   color="#aaa"
                   style={{ marginLeft: 10 }}
                 />
-                <Text style={styles.metaText}>2 min ago</Text>
+                <Text style={styles.metaText}>{card.time}</Text>
               </View>
 
               <View style={styles.cardActionsRow}>
                 <View style={styles.iconWithText}>
                   <Ionicons name="thumbs-up" color="#888" size={14} />
-                  <Text style={styles.iconText}>89</Text>
+                  <Text style={styles.iconText}>{card.likes}</Text>
                 </View>
                 <View style={styles.iconWithText}>
                   <FontAwesome name="share" color="#888" size={14} />
@@ -138,33 +209,31 @@ export default function FeedScreen() {
                   />
                   <Text style={styles.iconText}>Report</Text>
                 </View>
-                <Text style={styles.metaText}>1,234 views</Text>
+                <Text style={styles.metaText}>{card.views} views</Text>
               </View>
             </View>
           </View>
         ))}
       </ScrollView>
+
+      {/* Bottom Navigation */}
       <View style={styles.bottomNav}>
         <TouchableOpacity style={styles.navItem}>
           <Ionicons name="home" size={24} color="#22C55E" />
           <Text style={styles.navTextActive}>Home</Text>
         </TouchableOpacity>
-
         <TouchableOpacity style={styles.navItem}>
           <Ionicons name="camera" size={24} color="#ccc" />
           <Text style={styles.navText}>Record</Text>
         </TouchableOpacity>
-
         <TouchableOpacity style={styles.navItem}>
           <Ionicons name="compass" size={24} color="#ccc" />
           <Text style={styles.navText}>Explore</Text>
         </TouchableOpacity>
-
         <TouchableOpacity style={styles.navItem}>
           <Ionicons name="gift" size={24} color="#ccc" />
           <Text style={styles.navText}>Reward</Text>
         </TouchableOpacity>
-
         <TouchableOpacity style={styles.navItem}>
           <Ionicons name="person" size={24} color="#ccc" />
           <Text style={styles.navText}>Profile</Text>
@@ -173,33 +242,28 @@ export default function FeedScreen() {
     </SafeAreaView>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#121F1C',
   },
   gradientSection: {
-    paddingHorizontal: 16,
-    paddingTop: 20,
-    paddingBottom: 16,
+    paddingBottom: 20,
   },
   headerContainer: {
-    marginBottom: 24,
+    padding: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 6,
-    
   },
   title: {
+    fontSize: 22,
+    fontWeight: 'bold',
     color: '#fff',
-    fontSize: 18,
-    fontWeight: '700',
   },
   subtitle: {
+    fontSize: 14,
     color: '#ccc',
-    fontSize: 12,
   },
   headerActions: {
     flexDirection: 'row',
@@ -207,51 +271,47 @@ const styles = StyleSheet.create({
   },
   uploadButton: {
     backgroundColor: '#22C55E',
-    borderRadius: 8,
-    paddingHorizontal: 12,
     paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 20,
   },
   uploadButtonText: {
     color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
+    fontWeight: 'bold',
   },
   searchBar: {
+    backgroundColor: '#1E2B28',
+    marginHorizontal: 16,
+    borderRadius: 12,
+    padding: 8,
     flexDirection: 'row',
     alignItems: 'center',
-    borderColor: '#666666',
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    marginBottom: 16,
+  },
+  searchIcon: {
+    marginHorizontal: 8,
   },
   searchInput: {
     flex: 1,
-    paddingVertical: 12,
     color: '#fff',
     fontSize: 14,
   },
-  searchIcon: {
-    marginRight: 8,
-  },
   filterIcon: {
-    marginLeft: 8,
+    marginHorizontal: 8,
   },
   tabsRow: {
     flexDirection: 'row',
-    marginBottom: 8,
+    paddingHorizontal: 16,
+    marginTop: 10,
   },
   tabButton: {
-    borderWidth: 1,
-    borderColor: '#444',
-    borderRadius: 8,
     paddingVertical: 6,
-    paddingHorizontal: 15,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+    backgroundColor: '#1A2A27',
     marginRight: 10,
   },
   tabButtonActive: {
     backgroundColor: '#22C55E',
-    borderColor: '#22C55E',
   },
   tabText: {
     color: '#ccc',
@@ -259,15 +319,13 @@ const styles = StyleSheet.create({
   },
   tabTextActive: {
     color: '#fff',
-    fontWeight: '600',
+    fontWeight: 'bold',
   },
   card: {
-    backgroundColor: '#1A1F1D',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#454343',
+    backgroundColor: '#1E2B28',
     marginHorizontal: 16,
-    marginBottom: 20,
+    marginTop: 16,
+    borderRadius: 12,
     overflow: 'hidden',
   },
   cardImageWrapper: {
@@ -275,48 +333,45 @@ const styles = StyleSheet.create({
   },
   cardImage: {
     width: '100%',
-    height: 160,
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
+    height: 200,
   },
   liveTag: {
     position: 'absolute',
     top: 10,
     left: 10,
-    backgroundColor: '#EF4444',
+    backgroundColor: 'red',
     color: '#fff',
-    fontSize: 10,
-    fontWeight: 'bold',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    fontSize: 12,
     borderRadius: 4,
-    paddingHorizontal: 6,
-    paddingVertical: 4,
+    fontWeight: 'bold',
   },
   highTag: {
     position: 'absolute',
     top: 10,
     right: 10,
-    backgroundColor: '#22C55E',
-    color: '#fff',
-    fontSize: 10,
-    fontWeight: 'bold',
+    backgroundColor: '#FACC15',
+    color: '#000',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    fontSize: 12,
     borderRadius: 4,
-    paddingHorizontal: 6,
-    paddingVertical: 4,
+    fontWeight: 'bold',
   },
   cardContent: {
     padding: 12,
   },
   cardTitle: {
+    fontSize: 15,
+    fontWeight: 'bold',
     color: '#fff',
-    fontWeight: '600',
-    fontSize: 14,
     marginBottom: 8,
   },
   cardMetaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
-    flexWrap: 'wrap',
+    marginBottom: 6,
   },
   metaText: {
     color: '#aaa',
@@ -324,26 +379,25 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   credibilityDot: {
-    width: 6,
-    height: 6,
-    backgroundColor: '#22C55E',
-    borderRadius: 3,
-    marginHorizontal: 4,
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#aaa',
+    marginHorizontal: 6,
   },
   cardActionsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    flexWrap: 'wrap',
     marginTop: 8,
     justifyContent: 'space-between',
   },
   iconWithText: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: 10,
   },
   iconText: {
-    color: '#888',
+    color: '#aaa',
     fontSize: 12,
     marginLeft: 4,
   },
@@ -351,22 +405,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    backgroundColor: '#1A1F1D',
-    paddingVertical: 10,
-    borderTopWidth: 1,
-    borderTopColor: '#333',
+    paddingVertical: 12,
+    backgroundColor: '#1A2A27',
+    position: 'absolute',
+    bottom: 0,
+    width: '100%',
   },
   navItem: {
     alignItems: 'center',
   },
   navText: {
     fontSize: 10,
-    color: '#ccc',
+    color: '#999',
     marginTop: 2,
   },
   navTextActive: {
     fontSize: 10,
     color: '#22C55E',
     marginTop: 2,
+    fontWeight: 'bold',
   },
 });
